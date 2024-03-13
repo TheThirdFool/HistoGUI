@@ -150,7 +150,19 @@ int HistoGUI::DrawCrosshairs(int mouse_x, int mouse_y){
 	pos_x = mouse_x * width_scale  - x_offset;
 
 	char coord[32];
-	sprintf(coord, "(%.2f, %.2f)", pos_x, pos_y);
+
+	if(Draw2D_On){
+		int x_zpos = (int) (pos_x - min_x)/bw_x; 
+		int y_zpos = (int) (pos_y - min_y)/bw_y;
+		if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1){
+			pos_z = 0.0;
+		} else { 
+			pos_z = z[x_zpos][y_zpos]; 	
+		}
+		sprintf(coord, "(%.2f, %.2f) z=%.2f", pos_x, pos_y, pos_z);
+	} else {
+		sprintf(coord, "(%.2f, %.2f)", pos_x, pos_y);
+	}
 	XDrawString(disp, wind, DefaultGC(disp, screen), mouse_x + 5, mouse_y + 12, coord, strlen(coord));
 	 
 	return 1;
@@ -464,30 +476,46 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 		double binwidth_x = 0.8 * width_scale  / x.size();
 		double binwidth_y = 0.8 * height_scale / y.size();
-	
 
+		bw_x = (max_x - min_x) / x.size();
+		bw_y = (max_y - min_y) / y.size();
+	//	x_wid  = (x[i] + x_offset) / width_scale;
+	
 		for(int i=0; i < width; i++){
 			x_wid  = 1+ (i * width_scale) - x_offset;
 			if(x_wid > max_x) x_wid = max_x;
 			if(x_wid < min_x) x_wid = min_x;
+			//printf("(%f, ??)\n", x_wid);
+			//x_wid  = (x[i] + x_offset) / width_scale;
 
 			for(int j=0; j < height; j++){
 				y_wid  = 1 + (j * height_scale) - y_offset;
+			//	printf("(%f, %f)\n", x_wid, y_wid);
 				if(y_wid > max_y) y_wid = max_y;
 				if(y_wid < min_y) y_wid = min_y;
-				int colindex = (int) 10 * z[(int)x_wid][(int)y_wid] / max_cont; 
+
+	//			printf("(%f, %f) = ", x_wid,y_wid);
+				//printf(" %f\n", z[(int)x_wid - min_x][(int)y_wid - min_y]);
+				int x_zpos = (int) (x_wid - min_x)/bw_x; 
+				int y_zpos = (int) (y_wid - min_y)/bw_y;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
+				//printf("%d, %d [%f, %f] (%f,%f)\n", x_zpos, y_zpos, x_wid, y_wid , bw_x, bw_y);
+
+				int colindex = (int) 10 * z[x_zpos][y_zpos] / max_cont; 
+				//printf("%d\n" , colindex);
+				//printf("%f - %f = %i (%d)\n", (int)(x_wid - min_x), colindex);
 				if(drawLog){
-					if(z[(int)x_wid][(int)y_wid] <= 0){
+					if(z[x_zpos][y_zpos] <= 0){
 						 colindex = 0;
 					} else {
- 						colindex = (int) 20 * log(z[(int)x_wid][(int)y_wid]) / max_cont;
+ 						colindex = (int) 20 * log(z[x_zpos][y_zpos]) / max_cont;
 					}
 				}
 				if(colindex > 19) colindex = 19;
 				//int colindex = (int) 10 * i / width; 
 				//if(colindex > 0){
 				//printf("Colour = %i\n",colindex);
-		//		printf("(%f, %f) = %f\n", x_wid,y_wid, z[(int)x_wid][(int)y_wid]);
+				//printf("(%f, %f) = %f\n", x_wid,y_wid, z[(int)x_wid - min_x][(int)y_wid - min_y]);
 				//}
 				XSetForeground(disp, DefaultGC(disp,screen), PixelColour[colindex].pixel);
 				//XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid - 0.5* binwidth_x, y_wid -0.5*binwidth_y, binwidth_x, binwidth_y);
@@ -546,17 +574,22 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 		double binwidth_x = 0.8 * width_scale  / x.size();
 		double binwidth_y = 0.8 * height_scale / y.size();
+		bw_x = (max_x - min_x) / x.size();
+		bw_y = (max_y - min_y) / y.size();
 
 		double max_cont = z[0][0];	
 		for(int i=0; i<width; i++){
 			x_wid  = (i * width_scale) - x_offset;
 			for(int j=0; j<height; j++){
 				y_wid  = (j * height_scale) - y_offset;
+				int x_zpos = (int) (x_wid - min_x)/bw_x; 
+				int y_zpos = (int) (y_wid - min_y)/bw_y;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(drawLog) {
-					if(z[(int)x_wid][(int)y_wid] <= 0) continue;
-					if(log(z[(int)x_wid][(int)y_wid]) > max_cont) max_cont = log(z[(int)x_wid][(int)y_wid]);
+					if(z[x_zpos][y_zpos] <= 0) continue;
+					if(log(z[x_zpos][y_zpos]) > max_cont) max_cont = log(z[x_zpos][y_zpos]);
 				} else {
-					if(z[(int)x_wid][(int)y_wid] > max_cont) max_cont = z[(int)x_wid][(int)y_wid];
+					if(z[x_zpos][y_zpos] > max_cont) max_cont = z[x_zpos][y_zpos];
 				}
 			}
 		}
@@ -570,14 +603,17 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 			for(int j=0; j < height; j++){
 				y_wid  = (j * height_scale) - y_offset;
+				int x_zpos = (int) (x_wid - min_x)/bw_x; 
+				int y_zpos = (int) (y_wid - min_y)/bw_y;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(y_wid > max_y) y_wid = max_y;
 				if(y_wid < min_y) y_wid = min_y;
-				int colindex = (int) 10 * z[(int)x_wid][(int)y_wid] / max_cont; 
+				int colindex = (int) 10 * z[x_zpos][y_zpos] / max_cont; 
 				if(drawLog){
-					if(z[(int)x_wid][(int)y_wid] <= 0){
+					if(z[x_zpos][y_zpos] <= 0){
 						 colindex = 0;
 					} else {
-						colindex = (int)220 * log(z[(int)x_wid][(int)y_wid]) / max_cont;
+						colindex = (int)220 * log(z[(int)(x_wid - min_x)][(int)(y_wid - min_x)]) / max_cont;
 					}
 				}
 				if(colindex > 19) colindex = 19;
@@ -650,10 +686,14 @@ int HistoGUI::Loop(){
 			if(evt.xbutton.button == Button1){
 				/* draw a pixel at the mouse position. */
 				XClearWindow(disp, wind);
-				DrawCrosshairs(mouse_x, mouse_y);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
+				DrawCrosshairs(mouse_x, mouse_y);
 				MousePressed = true;
-				printf("(%f, %f)\n", pos_x, pos_y);
+				if(Draw2D_On){
+					printf("(%f, %f) z=%.2f\n", pos_x, pos_y, pos_z);
+				} else {
+					printf("(%f, %f)\n", pos_x, pos_y);
+				}
 			} if(evt.xbutton.button == Button3){
 				MousePressed2 = true;
 			} if(evt.xbutton.button == Button2){

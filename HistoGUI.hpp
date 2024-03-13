@@ -44,8 +44,12 @@ class HistoGUI{
 
 	double pos_x;
 	double pos_y;
+	double pos_z;
 	double new_pos_x;
 	double new_pos_y;
+	double bw_x;
+	double bw_y;
+
 
 	unsigned int width;  
 	unsigned int height;  
