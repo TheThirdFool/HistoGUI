@@ -14,7 +14,6 @@
 
 // Program to run
 int main(int argc, char ** argv){
-/*
 	// Data is stored in a vector
 	std::vector< double > X; 
 	std::vector< double > Y; 
@@ -39,9 +38,6 @@ int main(int argc, char ** argv){
 	// Close the GUI when it is closed
 	gui.Close();
 	
-	return 0.0;
-*/
-
 	// ==== or if 2D ====
 
 	// Create the HistoGUI object
