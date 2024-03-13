@@ -1,5 +1,3 @@
-#include "HistoGUI.hpp" 
-
 
 int HistoGUI::SetData(std::vector<double> a, std::vector<double>b){
 	for(int i=0; i < a.size(); i++){
@@ -9,7 +7,7 @@ int HistoGUI::SetData(std::vector<double> a, std::vector<double>b){
 	return a.size();
 }
 
-int HistoGUI::SetData2D(std::vector<double> a, std::vector<double> b, std::vector<std::vector<double>> c){
+int HistoGUI::SetData2D(std::vector<double> a, std::vector<double> b, std::vector<std::vector<double> > c){
 	for(int i=0; i < b.size(); i++){
 		y.push_back(b[i]);
 	}
@@ -278,7 +276,11 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		int h_step = height / 10;
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
-			sprintf(axis_val, "%.1f", y_val);
+			if(drawLog){
+				sprintf(axis_val, "%.1f", exp(y_val));
+			} else { 
+				sprintf(axis_val, "%.1f", y_val);
+			}
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
 	
@@ -344,7 +346,11 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		int h_step = height / 10;
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
-			sprintf(axis_val, "%.1f", y_val);
+			if(drawLog){
+				sprintf(axis_val, "%.1f", exp(y_val));
+			} else { 
+				sprintf(axis_val, "%.1f", y_val);
+			}
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
 	
@@ -393,6 +399,7 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 }
 
 int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win){
+	//printf("Drawing 2d\n");
 	int j1, j2;
 	unsigned int j3, j4;  
 	Window root_return;
@@ -436,6 +443,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		//printf(" max_y = %f\n", max_y );
 		//printf(" min_x = %f\n", min_x );
 		//printf(" min_y = %f\n", min_y );
+		//printf(" max_z = %f\n", max_cont);
 
 		width_scale = (max_x - min_x) / (0.8 * width);
 		x_offset = 0.5 * ((max_x - min_x) / 0.8) - 0.5 * (min_x + max_x);
@@ -479,7 +487,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 				//int colindex = (int) 10 * i / width; 
 				//if(colindex > 0){
 				//printf("Colour = %i\n",colindex);
-				//printf("(%f, %f) = %f\n", x_wid,y_wid, z[(int)x_wid][(int)y_wid]);
+		//		printf("(%f, %f) = %f\n", x_wid,y_wid, z[(int)x_wid][(int)y_wid]);
 				//}
 				XSetForeground(disp, DefaultGC(disp,screen), PixelColour[colindex].pixel);
 				//XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid - 0.5* binwidth_x, y_wid -0.5*binwidth_y, binwidth_x, binwidth_y);

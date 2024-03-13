@@ -84,3 +84,4 @@ class HistoGUI{
 #endif
 
 
+#include "HistoGUI_Library.cpp"
