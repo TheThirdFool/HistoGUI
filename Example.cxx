@@ -20,7 +20,7 @@ int main(int argc, char ** argv){
 
 	for(int i = -50; i < 50; i++){
 		X.push_back(i);
-		Y.push_back(-1.0 * i*i);		
+		Y.push_back(i*i*i);		
 	}
 
 	// Create the HistoGUI object

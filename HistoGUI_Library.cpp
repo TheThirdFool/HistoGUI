@@ -439,6 +439,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		}
 
 		double max_cont = z[0][0];	
+		if(drawLog) max_cont = 0;
 
 		for(int i=0; i<x.size(); i++){
 			for(int j=0; j<y.size(); j++){
@@ -741,7 +742,7 @@ int HistoGUI::Loop(){
 	
 		} else if (evt.type == KeyPress){
 
-			printf("Key pressed = %lx \n", XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0));
+			//printf("Key pressed = %lx \n", XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0));
 			double keySym = XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0);
 			if(keySym == 0x20){
 				scaleZ = 1.0;
