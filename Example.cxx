@@ -57,9 +57,12 @@ int main(int argc, char ** argv){
 
 	int n_samples = 1000;
 
-
 	double scaleX = (endX - startX) / n_samples;
 	double scaleY = (endY - startY) / n_samples;
+
+	// The HistoGUI 2D structure is based off a 2D histogram. The X and Y axis can be 
+	// thought of as defining the X and Y bins. With the Z 2D vector is the occupancy
+	// of the bins.  
 
 	for(int i = 0; i < n_samples; i++){
 		double x_val = scaleX * i + startX;
@@ -71,13 +74,10 @@ int main(int argc, char ** argv){
 		std::vector< double > temp; 
 		for(int j = 0; j < n_samples; j++){
 			y_val = scaleY * j + startY;
-
-		//	printf("(%f, %f) = %f\n", x_val, y_val, x_val * y_val);
 			temp.push_back(x_val * y_val);		
 		}
 		Z2.push_back(temp);		
 	}
-	// Data is X, Y = x, y coordinates of data, Z = nested (y long) vectors for each x coordinate.
 
 	gui2.Set2D(true);
 	gui2.SetData2D(X2,Y2,Z2);

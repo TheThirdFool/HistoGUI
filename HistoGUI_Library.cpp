@@ -95,6 +95,8 @@ int HistoGUI::Init(){
 	scaleZ  = 1.0;
 	drawLog = false;
 
+	
+
 	return 1;
 
 }
@@ -739,21 +741,22 @@ int HistoGUI::Loop(){
 	
 		} else if (evt.type == KeyPress){
 
-			printf("Key pressed = %x\n", evt.xkey.keycode);
-			if(evt.xkey.keycode == 0x41 or evt.xkey.keycode == 0x39){
+			printf("Key pressed = %lx \n", XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0));
+			double keySym = XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0);
+			if(keySym == 0x20){
 				scaleZ = 1.0;
 				XClearWindow(disp, wind);
 				DrawData(-1,-1,-1,-1);
 				
-			}else if(evt.xkey.keycode == 0x2b){
+			}else if(keySym == 0x70){
 				scaleZ *= 0.9;
 				XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
-			}else if(evt.xkey.keycode == 0x27){
+			}else if(keySym == 0x6f){
 				scaleZ *= 1.1;
 				XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
-			}else if(evt.xkey.keycode == 0x2d){
+			}else if(keySym == 0x6c){
 				if(drawLog){
 					drawLog = false;
 				} else {
