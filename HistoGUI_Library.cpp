@@ -163,7 +163,11 @@ int HistoGUI::DrawCrosshairs(int mouse_x, int mouse_y){
 		}
 		sprintf(coord, "(%.2f, %.2f) z=%.2f", pos_x, pos_y, pos_z);
 	} else {
-		sprintf(coord, "(%.2f, %.2f)", pos_x, pos_y);
+		if(drawLog){
+			sprintf(coord, "(%.2f, %.2f)", pos_x, exp(pos_y));
+		} else { 
+			sprintf(coord, "(%.2f, %.2f)", pos_x, pos_y);
+		}
 	}
 	XDrawString(disp, wind, DefaultGC(disp, screen), mouse_x + 5, mouse_y + 12, coord, strlen(coord));
 	 
