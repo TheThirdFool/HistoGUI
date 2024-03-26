@@ -74,6 +74,7 @@ class HistoGUI{
 	int DrawData(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);
 	int DrawCrosshairs(int mouse_x, int mouse_y);
 	int Zoom(int mouse_x, int mouse_y);
+	int virtual Refresh();
 
 	int SetData2D(std::vector<double> a, std::vector<double> b, std::vector< std::vector<double> > c);
 	int DrawData2D(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);

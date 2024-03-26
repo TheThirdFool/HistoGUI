@@ -12,6 +12,20 @@
 // First you must include the HistoGUI header file. (Also contains vector etc)
 #include "HistoGUI.hpp"
 
+class HistoGUI_Update : public HistoGUI {
+	public:
+	int Refresh();
+};
+
+int HistoGUI_Update::Refresh(){
+	double xLast = x.back() + 1.0;
+	x.push_back(xLast);
+	y.push_back(xLast * xLast * xLast);
+	printf("Custom refresh fucntion\n");
+	return 1;
+}
+
+
 // Program to run
 int main(int argc, char ** argv){
 	// Data is stored in a vector
@@ -24,12 +38,13 @@ int main(int argc, char ** argv){
 	}
 
 	// Create the HistoGUI object
-	HistoGUI gui;
+	HistoGUI_Update gui;
 	gui.Help();
 
 	// Fill with the data
 	gui.Set2D(false);
 	gui.SetData( X, Y );
+	gui.Refresh();
 
 	// Run the GUI	
 	gui.Init();

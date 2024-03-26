@@ -1,4 +1,9 @@
 
+int HistoGUI::Refresh(){
+	printf("Refresh function not set!\n");
+	return 0;
+}
+
 int HistoGUI::SetData(std::vector<double> a, std::vector<double>b){
 	for(int i=0; i < a.size(); i++){
 		x.push_back(a[i]);
@@ -761,6 +766,10 @@ int HistoGUI::Loop(){
 				scaleZ *= 1.1;
 				XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
+			}else if(keySym == 0x72){
+				Refresh();
+				XClearWindow(disp, wind);
+				DrawData(old_xl, old_yl, old_xh, old_yh);
 			}else if(keySym == 0x6c){
 				if(drawLog){
 					drawLog = false;
@@ -792,9 +801,10 @@ int HistoGUI::Help(){
 	printf("click          - Crosshairs\n");
 	printf("click and drag - Zoom into region\n");
 	printf("\n");
-	printf("l - Log plot (y in 1D, z in 2D)\n");
-	printf("p - Reduce z scale in 2D\n");
+	printf("l - log plot (y in 1D, z in 2D)\n");
+	printf("p - reduce z scale in 2D\n");
 	printf("o - increase z scale in 2D\n");
+	printf("r - call refresh function (if set)\n");
 	printf("q - quit\n");
 	printf("\n");
 	printf("--\n");
@@ -832,6 +842,13 @@ int HistoGUI::HelpCode(){
 	printf("\tgui.Close();\n");
 	printf("\n");
 	printf("This will complete the gui processes.\n");
+	printf("\n");
+	printf("----\n");
+	printf("\n");
+	printf("To implement a refresh function:\n");
+	printf(" - Make a specific subclass of HistoGUI\n");
+	printf(" - Redefine the function 'Refresh()'\n");
+	printf(" example is in 'Example.cxx'\n");
 	printf("\n");
 	printf("----\n");
 	printf("\n");
