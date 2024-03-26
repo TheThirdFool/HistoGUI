@@ -12,16 +12,22 @@
 // First you must include the HistoGUI header file. (Also contains vector etc)
 #include "HistoGUI.hpp"
 
+
+// Define a subclass (derived class) from HistoGUI
 class HistoGUI_Update : public HistoGUI {
 	public:
+	// We will be redefining Refresh, but extra functions can be added if needed.
 	int Refresh();
 };
 
+// Write a custom refresh function. This can read from a predefined file etc. 
 int HistoGUI_Update::Refresh(){
 	double xLast = x.back() + 1.0;
+
+	// x & y are the two vectors in 1D
 	x.push_back(xLast);
 	y.push_back(xLast * xLast * xLast);
-	printf("Custom refresh fucntion\n");
+	printf("Custom refresh function\n");
 	return 1;
 }
 
@@ -37,14 +43,13 @@ int main(int argc, char ** argv){
 		Y.push_back(i*i*i);		
 	}
 
-	// Create the HistoGUI object
+	// Create the HistoGUI object (HistoGUI_Update for custom refresh function)
 	HistoGUI_Update gui;
 	gui.Help();
 
 	// Fill with the data
 	gui.Set2D(false);
 	gui.SetData( X, Y );
-	gui.Refresh();
 
 	// Run the GUI	
 	gui.Init();
