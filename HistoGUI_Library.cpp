@@ -286,6 +286,10 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		XDrawLine(disp, wind, DefaultGC(disp, screen), axis_x, 0.0, axis_x, height);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), 0.0, axis_y, width, axis_y);
 
+		int drawoffset = (int) 8 * strlen(yAxisTitle);
+		XDrawString(disp, wind, DefaultGC(disp, screen), 20, axis_y - 3, xAxisTitle, strlen(xAxisTitle));
+		XDrawString(disp, wind, DefaultGC(disp, screen), axis_x - drawoffset, 20, yAxisTitle, strlen(yAxisTitle));
+
 		char axis_val[4];
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
@@ -355,6 +359,10 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		XSetForeground(disp, DefaultGC(disp,screen), xcolour.pixel);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), axis_x, 0.0, axis_x, height);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), 0.0, axis_y, width, axis_y);
+
+		int drawoffset = (int) 8 * strlen(yAxisTitle);
+		XDrawString(disp, wind, DefaultGC(disp, screen), 20, axis_y - 3, xAxisTitle, strlen(xAxisTitle));
+		XDrawString(disp, wind, DefaultGC(disp, screen), axis_x - drawoffset, 20, yAxisTitle, strlen(yAxisTitle));
 
 		char axis_val[4];
 		int w_step = width / 10;
@@ -547,6 +555,10 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		XDrawLine(disp, wind, DefaultGC(disp, screen), axis_x, 0.0, axis_x, height);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), 0.0, axis_y, width, axis_y);
 
+		int drawoffset = (int) 8 * strlen(yAxisTitle);
+		XDrawString(disp, wind, DefaultGC(disp, screen), 20, axis_y - 3, xAxisTitle, strlen(xAxisTitle));
+		XDrawString(disp, wind, DefaultGC(disp, screen), axis_x - drawoffset, 20, yAxisTitle, strlen(yAxisTitle));
+
 		char axis_val[4];
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
@@ -651,6 +663,10 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		XSetForeground(disp, DefaultGC(disp,screen), xcolour.pixel);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), axis_x, 0.0, axis_x, height);
 		XDrawLine(disp, wind, DefaultGC(disp, screen), 0.0, axis_y, width, axis_y);
+
+		int drawoffset = (int) 8 * strlen(yAxisTitle);
+		XDrawString(disp, wind, DefaultGC(disp, screen), 20, axis_y - 3, xAxisTitle, strlen(xAxisTitle));
+		XDrawString(disp, wind, DefaultGC(disp, screen), axis_x - drawoffset, 20, yAxisTitle, strlen(yAxisTitle));
 
 		char axis_val[4];
 		int w_step = width / 10;

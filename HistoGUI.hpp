@@ -25,7 +25,8 @@ class HistoGUI{
 
 		auto_refresh = false;	
 		refresh_time = 1000; // miliseconds
-
+		xAxisTitle[0] = '\0';
+		yAxisTitle[0] = '\0';
 	}
 
 	Display * disp;
@@ -72,6 +73,8 @@ class HistoGUI{
 	bool drawLog;
 	bool auto_refresh;
 	long refresh_time;
+	char yAxisTitle[64];
+	char xAxisTitle[64];
 
 	double old_xl, old_xh, old_yl, old_yh;
 	double old_mouse_x, old_mouse_y;
@@ -94,6 +97,12 @@ class HistoGUI{
 	int Help();
 	int HelpCode();
 	int ReturnViridis(int i, int j);
+
+	int SetAxisTitles(char* xAxis, char* yAxis){
+		sprintf(yAxisTitle,"%s", yAxis);
+		sprintf(xAxisTitle,"%s", xAxis);	
+		return 1;
+	}
 
 };
 

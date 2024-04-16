@@ -27,7 +27,7 @@ int HistoGUI_Update::Refresh(){
 	// x & y are the two vectors in 1D
 	x.push_back(xLast);
 	y.push_back(xLast * xLast * xLast);
-	printf("Custom refresh function\n");
+	//printf("Custom refresh function\n");
 	return 1;
 }
 
@@ -47,11 +47,15 @@ int main(int argc, char ** argv){
 	HistoGUI_Update gui;
 	gui.Help();
 
+	// Set auto refresh with custom refresh rate of 100 ms
+	gui.SetAutoRefresh(true, 100);
+
 	// Fill with the data
 	gui.Set2D(false);
 	gui.SetData( X, Y );
 
-	gui.SetAutoRefresh(true, 500);
+	// Set axis titles
+	gui.SetAxisTitles((char*)"X Axis title",(char*)"Y Axis title");
 
 	// Run the GUI	
 	gui.Init();
