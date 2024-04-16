@@ -51,6 +51,8 @@ int main(int argc, char ** argv){
 	gui.Set2D(false);
 	gui.SetData( X, Y );
 
+	gui.SetAutoRefresh(true, 500);
+
 	// Run the GUI	
 	gui.Init();
 	gui.Loop();

@@ -100,8 +100,6 @@ int HistoGUI::Init(){
 	scaleZ  = 1.0;
 	drawLog = false;
 
-	
-
 	return 1;
 
 }
@@ -422,6 +420,8 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 }
 
 int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win){
+
+//	using namespace std::chrono;
 	//printf("Drawing 2d\n");
 	int j1, j2;
 	unsigned int j3, j4;  
@@ -430,6 +430,8 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 	double x_step;// = (width  * 0.8) / x.size();
 	double y_step;// = (height * 0.8) / x.size();
+
+//	auto start = high_resolution_clock::now();
 
 	if(x_low_win == -1 and y_low_win == -1 and x_hi_win == -1 and y_hi_win == -1){	
 		// Audomatically decide data postition
@@ -502,6 +504,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 			for(int j=0; j < height; j++){
 				y_wid  = 1 + (j * height_scale) - y_offset;
+	
 			//	printf("(%f, %f)\n", x_wid, y_wid);
 				if(y_wid > max_y) y_wid = max_y;
 				if(y_wid < min_y) y_wid = min_y;
@@ -530,7 +533,9 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 				//printf("(%f, %f) = %f\n", x_wid,y_wid, z[(int)x_wid - min_x][(int)y_wid - min_y]);
 				//}
 				XSetForeground(disp, DefaultGC(disp,screen), PixelColour[colindex].pixel);
+
 				//XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid - 0.5* binwidth_x, y_wid -0.5*binwidth_y, binwidth_x, binwidth_y);
+				//printf("BW = %ii\n", (int)binwidth_y  / 1.0);
 				XDrawPoint(disp, wind, DefaultGC(disp, screen), i,j);
 			}
 		}
@@ -669,6 +674,11 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 	old_yl = y_low_win;
 	old_xh = x_hi_win;
 	old_yh = y_hi_win;
+	
+
+//	auto stop = high_resolution_clock::now();
+//	auto duration = duration_cast<microseconds>(stop - start);
+//	printf("Time taken = %lld\n", duration.count());
 
 	return 1;
 }
@@ -678,8 +688,17 @@ int HistoGUI::Loop(){
 
 	bool MousePressed  = false;
 	bool MousePressed2 = false;
+	
 
 	while (1) {
+		if (auto_refresh == true and !XPending(disp)){
+				Refresh();
+				std::this_thread::sleep_for(std::chrono::milliseconds(refresh_time)); 
+				XClearWindow(disp, wind);
+				DrawData(old_xl, old_yl, old_xh, old_yh);
+				continue;
+		}
+
 		XNextEvent(disp, &evt);
 		if (evt.type == Expose) {
 	//		XFillRectangle(disp, wind, DefaultGC(disp, screen), 20, 20, 10, 10);
@@ -762,6 +781,10 @@ int HistoGUI::Loop(){
 				scaleZ *= 0.9;
 				XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
+			}else if(keySym == 0x73 and auto_refresh){
+				auto_refresh = false;
+			}else if(keySym == 0x73 and !auto_refresh){
+				auto_refresh = true;
 			}else if(keySym == 0x6f){
 				scaleZ *= 1.1;
 				XClearWindow(disp, wind);
@@ -782,6 +805,7 @@ int HistoGUI::Loop(){
 				break;	
 			}
 		}
+
 	}
 
 	return 1;
@@ -805,6 +829,7 @@ int HistoGUI::Help(){
 	printf("p - reduce z scale in 2D\n");
 	printf("o - increase z scale in 2D\n");
 	printf("r - call refresh function (if set)\n");
+	printf("s - toggle auto-refresh\n");
 	printf("q - quit\n");
 	printf("\n");
 	printf("--\n");
@@ -849,6 +874,11 @@ int HistoGUI::HelpCode(){
 	printf(" - Make a specific subclass of HistoGUI\n");
 	printf(" - Redefine the function 'Refresh()'\n");
 	printf(" example is in 'Example.cxx'\n");
+	printf("\n");
+	printf("To implement an auto-refresh that calls your refresh function include:\n");
+	printf("\tgui.SetAutoRefresh(true, refreshTime_in_milliseconds);\n");
+	printf("\n");
+	printf("Don't have the refesh too long as the GUI will be unresponsive during the wait.\n");
 	printf("\n");
 	printf("----\n");
 	printf("\n");

@@ -8,6 +8,8 @@
 #include <math.h>
 #include <vector>
 #include <cmath> 
+#include <chrono>
+#include <thread>
 	
 //#include "HistoGUI_Library.cpp"
 
@@ -19,7 +21,12 @@ class HistoGUI{
 
 	public:
 
-	HistoGUI(){}
+	HistoGUI(){
+
+		auto_refresh = false;	
+		refresh_time = 1000; // miliseconds
+
+	}
 
 	Display * disp;
 	Window    wind;
@@ -63,6 +70,8 @@ class HistoGUI{
 	bool Draw2D_On;
 	double scaleZ;
 	bool drawLog;
+	bool auto_refresh;
+	long refresh_time;
 
 	double old_xl, old_xh, old_yl, old_yh;
 	double old_mouse_x, old_mouse_y;
@@ -80,6 +89,7 @@ class HistoGUI{
 	int DrawData2D(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);
 	
 	bool Set2D( bool a ){ Draw2D_On = a; return a;}
+	long SetAutoRefresh( bool a, long milisec ){ auto_refresh = a; refresh_time = milisec; return milisec;}
 
 	int Help();
 	int HelpCode();
