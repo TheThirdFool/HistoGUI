@@ -88,6 +88,7 @@ class HistoGUI{
 	double sqrt2Pi; 
 	int startingIndex;
 	int endingIndex;
+	bool funcDrawn;
 
 
 	double old_xl, old_xh, old_yl, old_yh;

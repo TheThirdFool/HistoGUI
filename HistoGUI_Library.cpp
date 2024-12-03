@@ -101,6 +101,7 @@ int HistoGUI::Init(){
 	scaleZ  = 1.0;
 	drawLog = false;
 	edgeSet = false;
+	funcDrawn = false;
 	startingIndex = 0;
 	endingIndex   = 0;
 	return 1;
@@ -277,6 +278,8 @@ int HistoGUI::DrawGaus(){
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel,    gausInfo1, strlen(gausInfo1));
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+12, gausInfo2, strlen(gausInfo2));
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+24, gausInfo3, strlen(gausInfo3));
+
+	funcDrawn = true;
 	
 	return 1;
 }
@@ -344,14 +347,14 @@ int HistoGUI::Fit(){
 	//Estimate starting parameters
 	fitParams[0] = (FitEdgeHi + FitEdgeLo) * 0.5;   // mean
 	fitParams[1] = (FitEdgeHi - FitEdgeLo) * 1.1775 / 4;// sigma
-	fitParams[2] = maxSearch_Fit;                   // scale
+	fitParams[2] = maxSearch_Fit * (sqrt2Pi* fitParams[1]); // scale
 
 	int nData = endingIndex - startingIndex;
 
 	int nParams = 3; // To add more fit params the size of matricies will have to change also
 
 	double LastS = 0.0;
-	for(int k=startingIndex; k < nData; k++){
+	for(int k=startingIndex; k < endingIndex; k++){
 		LastS += pow((y[k] - Gaus(x[k])),2.0);
 	}
 
@@ -375,7 +378,7 @@ int HistoGUI::Fit(){
 		// Fill JTJ
 		for(int i = 0; i < nParams; i++){
 			for(int j = 0; j < nParams; j++){
-				for(int k = startingIndex; k < nData; k++){
+				for(int k = startingIndex; k < endingIndex; k++){
 					JTJ[i][j] += SelectDiffGaus(i, x[k]) * SelectDiffGaus(j, x[k]); 	
 				}
 			}
@@ -396,7 +399,7 @@ int HistoGUI::Fit(){
 	
 		// Find residuals
 		for(int i=0; i < nParams; i++){
-			for(int k=startingIndex; k < nData; k++){
+			for(int k=startingIndex; k < endingIndex; k++){
 				Bmat[i] += 1.0 * (y[k] - Gaus(x[k])) * SelectDiffGaus(i, x[k]);
 			}
 		}
@@ -432,7 +435,7 @@ int HistoGUI::Fit(){
 
 		// Get the ressquared
 		double S = 0.0;
-		for(int k=startingIndex; k < nData; k++){
+		for(int k=startingIndex; k < endingIndex; k++){
 			S += pow((y[k] - Gaus(x[k])),2.0);
 		}
 	
@@ -503,6 +506,7 @@ int HistoGUI::Zoom(int mouse_x, int mouse_y){
 	XClearWindow(disp, wind);
 //	XClearWindow(disp, wind_overlay);
 	DrawData(x_low_win, y_low_win, x_hi_win, y_hi_win);
+	if(funcDrawn) DrawGaus();
 	//double x_low_win, double y_low_win, double x_hi_win, double y_hi_win
 
 	return 1;
@@ -1079,6 +1083,7 @@ int HistoGUI::Loop(){
 			double keySym = XkbKeycodeToKeysym(disp, evt.xkey.keycode, 0,0);
 			if(keySym == 0x20){
 				scaleZ = 1.0;
+				funcDrawn = false;
 				XClearWindow(disp, wind);
 				DrawData(-1,-1,-1,-1);
 				
