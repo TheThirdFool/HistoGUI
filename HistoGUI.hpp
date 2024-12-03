@@ -25,6 +25,8 @@ class HistoGUI{
 
 		auto_refresh = false;	
 		refresh_time = 1000; // miliseconds
+		pi = 3.14159265358979323846;
+		sqrt2Pi = 2.50662827463; 
 		xAxisTitle[0] = '\0';
 		yAxisTitle[0] = '\0';
 	}
@@ -76,6 +78,18 @@ class HistoGUI{
 	char yAxisTitle[64];
 	char xAxisTitle[64];
 
+	double FitEdgeLo;
+	double FitEdgeHi;
+	double oldEdge;
+	bool   edgeSet;
+	int nIterations;
+	double fitParams[3];
+	double pi;
+	double sqrt2Pi; 
+	int startingIndex;
+	int endingIndex;
+
+
 	double old_xl, old_xh, old_yl, old_yh;
 	double old_mouse_x, old_mouse_y;
 
@@ -93,6 +107,16 @@ class HistoGUI{
 	
 	bool Set2D( bool a ){ Draw2D_On = a; return a;}
 	long SetAutoRefresh( bool a, long milisec ){ auto_refresh = a; refresh_time = milisec; return milisec;}
+
+	int SetFitEdge(int mouse_x);
+	int Fit();	
+	int DrawGaus();
+	double Gaus(double inX);
+	double DiffGaus_Mean(double inX);
+	double DiffGaus_Sigma(double inX);
+	double DiffGaus_Scale(double inX);
+	double SelectDiffGaus(int index, double inX);
+	
 
 	int Help();
 	int HelpCode();

@@ -97,9 +97,12 @@ int HistoGUI::Init(){
 		XAllocColor(disp, cmap, &PixelColour[i]);
 	}
 
+	nIterations = 1000;
 	scaleZ  = 1.0;
 	drawLog = false;
-
+	edgeSet = false;
+	startingIndex = 0;
+	endingIndex   = 0;
 	return 1;
 
 }
@@ -176,6 +179,292 @@ int HistoGUI::DrawCrosshairs(int mouse_x, int mouse_y){
 	 
 	return 1;
 }
+
+int HistoGUI::SetFitEdge(int mouse_x){
+
+	int j1, j2;
+	unsigned int j3, j4;  
+	Window root_return;
+
+	XGetGeometry(disp, wind, &root_return, &j1, &j2, &width, &height, &j3, &j4);
+	XSetForeground(disp,  DefaultGC(disp, screen), xcolour_red.pixel);
+	//XDrawLine(disp, wind, DefaultGC(disp, screen), mouse_x, 0.0, mouse_x, height);	
+	pos_x = mouse_x * width_scale  - x_offset;
+
+
+	if(edgeSet){
+		if(oldEdge > pos_x){
+			FitEdgeLo = pos_x;
+			FitEdgeHi = oldEdge;
+		} else if(oldEdge < pos_x){
+			FitEdgeLo = oldEdge;
+			FitEdgeHi = pos_x;
+		} else {
+			// Do nothing
+			return 1;
+		}
+		XDrawLine(disp, wind, DefaultGC(disp, screen), mouse_x, 0.0, mouse_x, height);	
+
+		Fit();
+		edgeSet = false;
+
+	} else {
+		edgeSet = true;
+		oldEdge = pos_x;
+
+		XClearWindow(disp, wind);
+		DrawData(old_xl, old_yl, old_xh, old_yh);
+		XSetForeground(disp,  DefaultGC(disp, screen), xcolour_red.pixel);
+		XDrawLine(disp, wind, DefaultGC(disp, screen), mouse_x, 0.0, mouse_x, height);	
+	}
+
+	return 1;
+}
+
+
+int HistoGUI::DrawGaus(){
+
+	int j1, j2;
+	unsigned int j3, j4;  
+	Window root_return;
+
+	XGetGeometry(disp, wind, &root_return, &j1, &j2, &width, &height, &j3, &j4);
+	XSetForeground(disp, DefaultGC(disp,screen), xcolour_red.pixel);	
+	double x_wid ;
+	double y_wid ;
+	double x_wid2;
+	double y_wid2;
+//	printf("WO = %f, WS = %f\n", x_offset, width_scale);
+//	printf("HO = %f, HS = %f\n", y_offset, height_scale);
+	//startingIndex = 0;
+	//endingIndex   = 0;
+	
+	for(int i=startingIndex; i < endingIndex-2; i++){
+		x_wid  = (x[i] + x_offset) / width_scale;
+		//y_wid  = (y[i] + y_offset) / height_scale;
+		x_wid2 = (x[i + 1] + x_offset) / width_scale;
+		//y_wid2 = (y[i + 1] + y_offset) / height_scale;
+		if(drawLog){
+			if(y[i] <= 0){
+				y_wid = 0;
+			} else {
+				y_wid  = (log(y[i]) + y_offset) / height_scale;
+			}
+			if(y[i+1] <= 0){
+				y_wid2 = 0;
+			} else {
+				y_wid2 = (log(y[i + 1]) + y_offset) / height_scale;
+			}
+		} else {
+			y_wid  = (Gaus(x[i]) + y_offset) / height_scale;
+			y_wid2 = (Gaus(x[i + 1]) + y_offset) / height_scale;
+		}
+//		printf("(%f, %f), (%f,%f)\n", x_wid,y_wid,x_wid2,y_wid2);
+		XDrawLine(disp, wind, DefaultGC(disp, screen), x_wid, y_wid, x_wid2, y_wid2);
+		XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid -2, y_wid -2, 4, 4);
+	}
+	XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid2 -2, y_wid2 -2, 4, 4);
+
+	int XposLabel = ((FitEdgeLo + x_offset) / width_scale) + 5;
+	//int YposLabel = (fitParams[2] + y_offset) / height_scale; 
+	int YposLabel = height*0.25;//(fitParams[2] + y_offset) / height_scale; 
+	char gausInfo1[32];
+	char gausInfo2[32];
+	char gausInfo3[32];
+	sprintf(gausInfo1, "Mean  = %.2f", fitParams[0]);	
+	sprintf(gausInfo2, "Sigma = %.2f", fitParams[1]);	
+	sprintf(gausInfo3, "Scale = %.2f", fitParams[2]);	
+	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel,    gausInfo1, strlen(gausInfo1));
+	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+12, gausInfo2, strlen(gausInfo2));
+	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+24, gausInfo3, strlen(gausInfo3));
+	
+	return 1;
+}
+
+
+
+double HistoGUI::Gaus(double inX){
+	//double mean  = fitParams[0]; 
+	//double sigma = fitParams[1];
+	//double scale = fitParams[2];
+	//double ret = ( scale / (sqrt2Pi* sigma) ) * einXp(pow((inX - mean),2.0) / (2.0*sigma*sigma));
+	double ret = ( fitParams[2] / (sqrt2Pi* fitParams[1]) ) * exp(-1.0 * pow((inX - fitParams[0]),2.0) / (2.0*fitParams[1]*fitParams[1]));
+//	printf("Gaus(%f) = %f\n", inX, ret);
+	return ret;
+}
+
+double HistoGUI::DiffGaus_Mean(double inX){
+	return Gaus(inX) * (inX - fitParams[0]) / (fitParams[1] * fitParams[1]);
+}
+double HistoGUI::DiffGaus_Sigma(double inX){
+	return Gaus(inX) * ((-fitParams[0] - fitParams[1] + inX) * (-fitParams[0] + fitParams[1] + inX)) / (fitParams[1] * fitParams[1] * fitParams[1]);
+}
+double HistoGUI::DiffGaus_Scale(double inX){
+	return Gaus(inX) * (1.0 / fitParams[2]);
+}
+
+double HistoGUI::SelectDiffGaus(int index, double inX){
+	if(index == 0){
+		return -1.0*DiffGaus_Mean(inX);
+	} else if(index == 1){
+		return -1.0*DiffGaus_Sigma(inX);
+	} else if(index == 2){
+		return -1.0*DiffGaus_Scale(inX);
+	} else {
+		printf("Error! - returning zero for fit partial derivative\n");
+		return 0.0;
+	}
+}
+
+int HistoGUI::Fit(){
+
+	startingIndex = 0;
+	endingIndex   = 0;
+	bool lookForMax = false;
+	double maxSearch_Fit; 
+	
+	double lastX_fit = x[0];
+	for(int i=1; i < x.size(); i++){
+		if(lastX_fit < FitEdgeLo and x[i] > FitEdgeLo){
+			startingIndex = i;
+			lookForMax = true;
+			maxSearch_Fit = y[i];
+		} 
+		if(lookForMax and y[i] > maxSearch_Fit){
+			maxSearch_Fit = y[i];
+		}
+		if(lastX_fit < FitEdgeHi and x[i] > FitEdgeHi){
+			endingIndex = i;
+			lookForMax = false;
+			break;
+		}
+		lastX_fit =  x[i];
+	}
+
+	//Estimate starting parameters
+	fitParams[0] = (FitEdgeHi + FitEdgeLo) * 0.5;   // mean
+	fitParams[1] = (FitEdgeHi - FitEdgeLo) * 1.1775 / 4;// sigma
+	fitParams[2] = maxSearch_Fit;                   // scale
+
+	int nData = endingIndex - startingIndex;
+
+	int nParams = 3; // To add more fit params the size of matricies will have to change also
+
+	double LastS = 0.0;
+	for(int k=startingIndex; k < nData; k++){
+		LastS += pow((y[k] - Gaus(x[k])),2.0);
+	}
+
+//	printf("INITIAL =========\n");
+//	printf(" [%f - %f] (%i - %i, %i)\n", FitEdgeLo, FitEdgeHi, startingIndex, endingIndex, nData);
+//	printf(" Mean  = %f \n", fitParams[0]);
+//	printf(" Sigma = %f \n", fitParams[1]);
+//	printf(" Scale = %f \n", fitParams[2]);
+//	printf(" S = %f\n", LastS);
+//	printf("=================\n");	
+
+	int iteration = 0;
+	for(; iteration < nIterations; iteration++){
+		double JTJ[3][3]    = {0.0};
+		double LDcomp[3][3] = {0.0};
+	
+		double Bmat[3] = {0.0};
+		double Ymat[3] = {0.0};
+		double Xmat[3] = {0.0};
+		
+		// Fill JTJ
+		for(int i = 0; i < nParams; i++){
+			for(int j = 0; j < nParams; j++){
+				for(int k = startingIndex; k < nData; k++){
+					JTJ[i][j] += SelectDiffGaus(i, x[k]) * SelectDiffGaus(j, x[k]); 	
+				}
+			}
+		}
+	
+		// Invert JTJ - Cholesky decomposition
+		for(int i = 0; i < nParams; i++) {
+	 		for(int j = 0; j <= i; j++) {
+	    		double sum = 0.0;
+	    		for(int k = startingIndex; k < j; k++) sum += LDcomp[i][k] * LDcomp[j][k];
+	    		if(i == j){
+					LDcomp[i][j] = sqrt(JTJ[i][i] - sum);
+	    		} else { 
+					LDcomp[i][j] = (1.0 / LDcomp[j][j] * (JTJ[i][j] - sum));
+				}
+			}			
+		}    
+	
+		// Find residuals
+		for(int i=0; i < nParams; i++){
+			for(int k=startingIndex; k < nData; k++){
+				Bmat[i] += 1.0 * (y[k] - Gaus(x[k])) * SelectDiffGaus(i, x[k]);
+			}
+		}
+	
+		// Forward Substitution
+		Ymat[0] = Bmat[0] / LDcomp[0][0];
+		for(int m = 1; m < nParams; m++){
+			double sum = 0.0;
+			for(int i=0; i < m; i++){
+				sum -= LDcomp[m][i] * Ymat[i];
+			}
+			Ymat[m] = (Bmat[m] - sum) / LDcomp[m][m];
+		}
+	
+		// Backwards Substitution
+		Xmat[nParams - 1] = Ymat[nParams - 1] / LDcomp[nParams - 1][nParams - 1];
+		for(int m = nParams - 2; m >= 0; m--){
+			double sum = 0.0;
+			for(int i= m+1; i < nParams; i++){
+				sum += LDcomp[i][m] * Xmat[i];
+			}
+			Xmat[m] = (Ymat[m] - sum) / LDcomp[m][m];
+		}
+	
+		for(int i=0; i < nParams; i++){
+			fitParams[i] -= Xmat[i];
+		}	
+
+		if(fitParams[0] > FitEdgeHi or fitParams[0] < FitEdgeLo)
+			fitParams[0] = (FitEdgeHi + FitEdgeLo) * 0.5;   // mean
+		if(fitParams[1] > FitEdgeHi - FitEdgeLo)
+			fitParams[1] = (FitEdgeHi - FitEdgeLo) * 1.1775 / 4;// sigma
+
+		// Get the ressquared
+		double S = 0.0;
+		for(int k=startingIndex; k < nData; k++){
+			S += pow((y[k] - Gaus(x[k])),2.0);
+		}
+	
+		if(LastS - S < 10 and iteration > 20){
+			LastS = S;
+			break;
+		}
+		if(S != S){
+			printf("Fit failed!\n");
+			break;
+		}
+		LastS = S;
+	}
+	
+	printf("=================\n");
+	printf(" Mean  = %f \n", fitParams[0]);
+	printf(" Sigma = %f \n", fitParams[1]);
+	printf(" Scale = %f \n", fitParams[2]);
+	printf(" S = %f\n", LastS);
+	printf(" Iterations = %i\n", iteration); 
+	printf("=================\n");	
+	// Xmat[nData] is now the change in the params
+	DrawGaus();
+
+	return 1;
+
+}
+
+
+
+
+
 
 int HistoGUI::Zoom(int mouse_x, int mouse_y){
 	
@@ -817,6 +1106,10 @@ int HistoGUI::Loop(){
 				}
 				XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
+			}else if(keySym == 0x66){
+				// Set fit edge
+				int mouse_x = evt.xbutton.x;
+				SetFitEdge(mouse_x);
 			} else {
 				break;	
 			}
@@ -846,6 +1139,7 @@ int HistoGUI::Help(){
 	printf("o - increase z scale in 2D\n");
 	printf("r - call refresh function (if set)\n");
 	printf("s - toggle auto-refresh\n");
+	printf("f - place fit ranges\n");
 	printf("q - quit\n");
 	printf("\n");
 	printf("--\n");
