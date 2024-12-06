@@ -8,3 +8,9 @@ To use consult the example script.
 
 Note that you can draw on the plot with the "right mouse click". This can be cleared with the "middle mouse button".
 
+Find more information here:
+
+https://thethirdfool.github.io/Pages/HistoGUI_Description.html
+
+
+

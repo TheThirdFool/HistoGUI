@@ -26,7 +26,7 @@ class HistoGUI_Update : public HistoGUI {
 	// Define gaussian generator here so can be used in refresh
 	std::default_random_engine generator;
 	std::normal_distribution<double> distribution;
-	HistoGUI_Update(): distribution(160,24.5) {}
+	HistoGUI_Update(): distribution(25,4) {}
 
 };
 
@@ -35,7 +35,8 @@ int HistoGUI_Update::Refresh(){
 	for(int i = 0; i < 1000; i++){
     	double number = distribution(generator);
 	    //if ((number>=-10.0)&&(number<10.0)) y[int((number + 10.0)*10)] += 1;
-	    if ((number>=100.0)&&(number<300.0)) y[int((number - 100.0))] += 1;
+	    if ((number>=0.0)&&(number<50.0)) y[int(number * 10.0)] += 1;
+	    //if ((number>=0.0)&&(number<100.0)) y[int((number*10))] += 1;
 	}
 	return 1;
 }
@@ -49,9 +50,10 @@ int main(int argc, char** argv){
 	std::vector< double > Y; 
 
 	// Define a histogram with 200 bins
-	for(int i = 0; i < 200; i++){
+	for(int i = 0; i < 500; i++){
 		//X.push_back((i / 10.0)-10.0);
-		X.push_back(i + 100.0);
+		//X.push_back(i + 100.0);
+		X.push_back((i / 10.0));
 		Y.push_back(0.0);		
 	}
 
@@ -63,7 +65,8 @@ int main(int argc, char** argv){
 	for(int i = 0; i < 5000; i++){
     	double number = gui.distribution(gui.generator);
 	    //if ((number>=-10.0)&&(number<10.0)) Y[int((number + 10.0)*10)] += 1;
-	    if ((number>=100.0)&&(number<300.0)) Y[int((number - 100.0))] += 1;
+	    if ((number>=0.0)&&(number<50.0)) Y[int(number*10)] += 1;
+	    //if ((number>=100.0)&&(number<300.0)) Y[int((number - 100.0))] += 1;
 	}
 
 	// Set auto refresh with custom refresh rate of 100 ms
