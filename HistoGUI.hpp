@@ -89,6 +89,7 @@ class HistoGUI{
 	int startingIndex;
 	int endingIndex;
 	bool funcDrawn;
+	bool isZoomed;
 
 
 	double old_xl, old_xh, old_yl, old_yh;
@@ -117,7 +118,7 @@ class HistoGUI{
 	double DiffGaus_Sigma(double inX);
 	double DiffGaus_Scale(double inX);
 	double SelectDiffGaus(int index, double inX);
-	int DrawMaximum();	
+	int DrawMaximum();
 
 	int Help();
 	int HelpCode();

@@ -104,6 +104,7 @@ int HistoGUI::Init(){
 	funcDrawn = false;
 	startingIndex = 0;
 	endingIndex   = 0;
+	isZoomed = false;
 	return 1;
 
 }
@@ -218,12 +219,18 @@ int HistoGUI::DrawMaximum(){
 				}
 			}
 		}
-	//	double binwidth_x = 0.8 * width_scale  / x.size();
-	//	double binwidth_y = 0.8 * height_scale / y.size();
 
-		// Convert to pixel refrence frame
-		draw_max_x = ( (new_max_x + x_offset) / width_scale  );// + ((int) binwidth_x * 0.5);
-		draw_max_y = ( (new_max_y + y_offset) / height_scale );// + ((int) binwidth_y * 0.5);	
+
+		// Convert to pixel refrence frame (place in the middle of the bin)
+		double binwidth_x = bw_x / width_scale;
+		double binwidth_y = bw_y / height_scale;
+		if(isZoomed){	
+			draw_max_x = ( (new_max_x + x_offset) / width_scale  ) + (binwidth_x * 0.5);
+			draw_max_y = ( (new_max_y + y_offset) / height_scale ) + (binwidth_y * 0.5);	
+		} else {
+			draw_max_x = ( (new_max_x + x_offset - 1.0) / width_scale  ) + (binwidth_x * 0.5);
+			draw_max_y = ( (new_max_y + y_offset - 1.0) / height_scale ) + (binwidth_y * 0.5);	
+		}
 
 	} else {
 		for(int i=0; i<y.size(); i++){
@@ -243,6 +250,10 @@ int HistoGUI::DrawMaximum(){
 		// Convert to pixel refrence frame
 		draw_max_x = (new_max_x + x_offset) / width_scale;
 		draw_max_y = (new_max_y + y_offset) / height_scale;	
+
+		// Draw line down
+		double axis_y  = (0. + y_offset) / height_scale;
+		XDrawLine(disp, wind, DefaultGC(disp, screen), draw_max_x, draw_max_y, draw_max_x, axis_y);
 	}
 
 	XFillRectangle(disp, wind, DefaultGC(disp, screen), draw_max_x -2, draw_max_y -2, 4, 4);
@@ -611,6 +622,8 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		min_x = x[0];
 		min_y = y[0];
 
+		isZoomed = false;
+
 		for(int i=0; i<x.size(); i++){
 			if(x[i] > max_x) max_x = x[i];
 			if(x[i] < min_x) min_x = x[i];
@@ -705,6 +718,7 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 
 	} else {
 		//double x_low_win, double y_low_win, double x_hi_win, double y_hi_win
+		isZoomed = true;
 
 		width_scale = (x_hi_win - x_low_win) / width;
 		x_offset = -1.0 * x_low_win;
@@ -805,11 +819,13 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 //	auto start = high_resolution_clock::now();
 
 	if(x_low_win == -1 and y_low_win == -1 and x_hi_win == -1 and y_hi_win == -1){	
-		// Audomatically decide data postition
+		// Automatically decide data postition
 		max_x = x[0];
 		max_y = y[0];
 		min_x = x[0];
 		min_y = y[0];
+
+		isZoomed = false;
 
 		for(int i=0; i<x.size(); i++){
 			if(x[i] > max_x) max_x = x[i];
@@ -947,6 +963,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		//		if(z[i][j] > max_cont) max_cont = z[i][j];
 		//	}
 		//}
+		isZoomed = true;
 
 		width_scale = (x_hi_win - x_low_win) / width;
 		x_offset = -1.0 * x_low_win;
