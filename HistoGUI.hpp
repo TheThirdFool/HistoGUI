@@ -117,7 +117,7 @@ class HistoGUI{
 	double DiffGaus_Sigma(double inX);
 	double DiffGaus_Scale(double inX);
 	double SelectDiffGaus(int index, double inX);
-	
+	int DrawMaximum();	
 
 	int Help();
 	int HelpCode();
