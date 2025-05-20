@@ -12,5 +12,6 @@ Find more information here:
 
 https://thethirdfool.github.io/Pages/HistoGUI_Description.html
 
+An example CMakeLists.txt file is included
 
 
