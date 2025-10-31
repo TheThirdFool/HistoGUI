@@ -26,16 +26,24 @@ class HistoGUI_Update : public HistoGUI {
 	// Define gaussian generator here so can be used in refresh
 	std::default_random_engine generator;
 	std::normal_distribution<double> distribution;
-	HistoGUI_Update(): distribution(25,4) {}
+	std::uniform_real_distribution<double> randNo;
+	std::exponential_distribution<double> expoDist;
+
+	HistoGUI_Update(): distribution(25,4), randNo(0.0, 1.0), expoDist(0.1) {}
 
 };
 
 // Write a custom refresh function. This adds an extra 1000 samples. 
 int HistoGUI_Update::Refresh(){
 	for(int i = 0; i < 1000; i++){
-    	double number = distribution(generator);
-	    //if ((number>=-10.0)&&(number<10.0)) y[int((number + 10.0)*10)] += 1;
-	    if ((number>=0.0)&&(number<50.0)) y[int(number * 10.0)] += 1;
+		if(randNo(generator) < 0.5){
+			double number = expoDist(generator);
+		    if ((number>=0.0)&&(number<50.0)) y[int(number*10)] += 1;
+		} else {
+    		double number = distribution(generator);
+	    	//if ((number>=-10.0)&&(number<10.0)) y[int((number + 10.0)*10)] += 1;
+	    	if ((number>=0.0)&&(number<50.0)) y[int(number * 10.0)] += 1;
+		}
 	    //if ((number>=0.0)&&(number<100.0)) y[int((number*10))] += 1;
 	}
 	return 1;
@@ -63,10 +71,15 @@ int main(int argc, char** argv){
 
 	// Fill with gaussian data to start with
 	for(int i = 0; i < 5000; i++){
-    	double number = gui.distribution(gui.generator);
-	    //if ((number>=-10.0)&&(number<10.0)) Y[int((number + 10.0)*10)] += 1;
-	    if ((number>=0.0)&&(number<50.0)) Y[int(number*10)] += 1;
-	    //if ((number>=100.0)&&(number<300.0)) Y[int((number - 100.0))] += 1;
+		if(gui.randNo(gui.generator) < 0.5){
+			double number = gui.expoDist(gui.generator);
+		    if ((number>=0.0)&&(number<50.0)) Y[int(number*10)] += 1;
+		} else {
+	    	double number = gui.distribution(gui.generator);
+		    //if ((number>=-10.0)&&(number<10.0)) Y[int((number + 10.0)*10)] += 1;
+		    if ((number>=0.0)&&(number<50.0)) Y[int(number*10)] += 1;
+		    //if ((number>=100.0)&&(number<300.0)) Y[int((number - 100.0))] += 1;
+		}
 	}
 
 	// Set auto refresh with custom refresh rate of 100 ms

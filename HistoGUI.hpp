@@ -89,7 +89,6 @@ class HistoGUI{
 	int startingIndex;
 	int endingIndex;
 	bool funcDrawn;
-	bool isZoomed;
 
 
 	double old_xl, old_xh, old_yl, old_yh;
@@ -97,6 +96,7 @@ class HistoGUI{
 
 	int Init();
 	int SetData(std::vector<double> a, std::vector<double>b);
+	int SetData(std::vector<double> a, std::vector<float>b);
 	int Loop();	
 	void Close(){ printf("Closing now!\n"); XCloseDisplay(disp); }
 	int DrawData(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);
@@ -118,7 +118,7 @@ class HistoGUI{
 	double DiffGaus_Sigma(double inX);
 	double DiffGaus_Scale(double inX);
 	double SelectDiffGaus(int index, double inX);
-	int DrawMaximum();
+	
 
 	int Help();
 	int HelpCode();

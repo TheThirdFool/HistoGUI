@@ -12,6 +12,14 @@ int HistoGUI::SetData(std::vector<double> a, std::vector<double>b){
 	return a.size();
 }
 
+int HistoGUI::SetData(std::vector<double> a, std::vector<float>b){
+	for(int i=0; i < a.size(); i++){
+		x.push_back(a[i]);
+		y.push_back((double)b[i]);
+	}
+	return a.size();
+}
+
 int HistoGUI::SetData2D(std::vector<double> a, std::vector<double> b, std::vector<std::vector<double> > c){
 	for(int i=0; i < b.size(); i++){
 		y.push_back(b[i]);
@@ -104,7 +112,6 @@ int HistoGUI::Init(){
 	funcDrawn = false;
 	startingIndex = 0;
 	endingIndex   = 0;
-	isZoomed = false;
 	return 1;
 
 }
@@ -178,86 +185,6 @@ int HistoGUI::DrawCrosshairs(int mouse_x, int mouse_y){
 		}
 	}
 	XDrawString(disp, wind, DefaultGC(disp, screen), mouse_x + 5, mouse_y + 12, coord, strlen(coord));
-	 
-	return 1;
-}
-
-int HistoGUI::DrawMaximum(){
-	int j1, j2;
-	unsigned int j3, j4;  
-	Window root_return;
-	//XMapRaised(disp, wind_overlay);
-
-	XGetGeometry(disp, wind, &root_return, &j1, &j2, &width, &height, &j3, &j4);
-	XSetForeground(disp,  DefaultGC(disp, screen), xcolour_red.pixel);
-
-	int draw_max_x = 0;
-	int draw_max_y = 0;
-	double new_max_x = 0.0;
-	double new_max_y = 0.0;
-
-	if(Draw2D_On){
-		double max_cont = z[0][0];	
-		if(drawLog) max_cont = 0;
-
-		// Find maximum		
-		for(int i=0; i<x.size(); i++){
-			for(int j=0; j<y.size(); j++){
-				if(drawLog) {
-					if(z[i][j] <= 0) continue;
-					if(log(z[i][j]) > max_cont){
-						max_cont = log(z[i][j]);
-						new_max_x = x[i];
-						new_max_y = y[j];
-					}
-				} else {
-					if(z[i][j] > max_cont){
-						max_cont = z[i][j];
-						new_max_x = x[i];
-						new_max_y = y[j];
-					}
-				}
-			}
-		}
-
-
-		// Convert to pixel refrence frame (place in the middle of the bin)
-		double binwidth_x = bw_x / width_scale;
-		double binwidth_y = bw_y / height_scale;
-		if(isZoomed){	
-			draw_max_x = ( (new_max_x + x_offset) / width_scale  ) + (binwidth_x * 0.5);
-			draw_max_y = ( (new_max_y + y_offset) / height_scale ) + (binwidth_y * 0.5);	
-		} else {
-			draw_max_x = ( (new_max_x + x_offset - 1.0) / width_scale  ) + (binwidth_x * 0.5);
-			draw_max_y = ( (new_max_y + y_offset - 1.0) / height_scale ) + (binwidth_y * 0.5);	
-		}
-
-	} else {
-		for(int i=0; i<y.size(); i++){
-			if(drawLog){	
-				if(y[i] <= 0) continue;
-				if(log(y[i]) > new_max_y){
-					new_max_y = log(y[i]);
-					new_max_x = x[i];
-				}
-			} else { 
-				if(y[i] > new_max_y){
-					new_max_y = y[i];
-					new_max_x = x[i];
-				}
-			}
-		}
-		// Convert to pixel refrence frame
-		draw_max_x = (new_max_x + x_offset) / width_scale;
-		draw_max_y = (new_max_y + y_offset) / height_scale;	
-
-		// Draw line down
-		double axis_y  = (0. + y_offset) / height_scale;
-		XDrawLine(disp, wind, DefaultGC(disp, screen), draw_max_x, draw_max_y, draw_max_x, axis_y);
-	}
-
-	XFillRectangle(disp, wind, DefaultGC(disp, screen), draw_max_x -2, draw_max_y -2, 4, 4);
-	printf("Max = (%f, %f)\n", new_max_x, new_max_y);
 	 
 	return 1;
 }
@@ -622,8 +549,6 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		min_x = x[0];
 		min_y = y[0];
 
-		isZoomed = false;
-
 		for(int i=0; i<x.size(); i++){
 			if(x[i] > max_x) max_x = x[i];
 			if(x[i] < min_x) min_x = x[i];
@@ -689,36 +614,39 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		XSetForeground(disp, DefaultGC(disp,screen), 0);	
 		double x_wid ;
 		double y_wid ;
-		double x_wid2;
-		double y_wid2;
+		double x_wid2 = 0;
+		double y_wid2 = 0;
 
 		for(int i=0; i < x.size() - 2; i++){
 			x_wid  = (x[i] + x_offset) / width_scale;
-			x_wid2 = (x[i + 1] + x_offset) / width_scale;
+			//x_wid2 = (x[i + 1] + x_offset) / width_scale;
 			if(drawLog){
 				if(y[i] <= 0){
-					y_wid = y_offset/height_scale;
+					y_wid = 0;
 				} else {
 					y_wid  = (log(y[i]) + y_offset) / height_scale;
 				}
-				if(y[i+1] <= 0){
-					y_wid2 = y_offset/height_scale;
-				} else {
-					y_wid2 = (log(y[i + 1]) + y_offset) / height_scale;
-				}
+			//	if(y[i+1] <= 0){
+			//		y_wid2 = 0;
+			//	} else {
+			//		y_wid2 = (log(y[i + 1]) + y_offset) / height_scale;
+			//	}
 			} else {
 				y_wid  = (y[i] + y_offset) / height_scale;
-				y_wid2 = (y[i + 1] + y_offset) / height_scale;
+			//	y_wid2 = (y[i + 1] + y_offset) / height_scale;
 			}
+			if(x.size() > 10000 and (i%((int)x.size()/10000) != 0)) continue; 
 			//printf("(%f, %f), (%f,%f)\n", x_wid,y_wid,x_wid2,y_wid2);
 			XDrawLine(disp, wind, DefaultGC(disp, screen), x_wid, y_wid, x_wid2, y_wid2);
 			XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid -2, y_wid -2, 4, 4);
+
+			x_wid2 = x_wid;
+			y_wid2 = y_wid;
 		}
 		XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid2 -2, y_wid2 -2, 4, 4);
 
 	} else {
 		//double x_low_win, double y_low_win, double x_hi_win, double y_hi_win
-		isZoomed = true;
 
 		width_scale = (x_hi_win - x_low_win) / width;
 		x_offset = -1.0 * x_low_win;
@@ -764,32 +692,56 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		XSetForeground(disp, DefaultGC(disp,screen), 0);	
 		double x_wid ;
 		double y_wid ;
-		double x_wid2;
-		double y_wid2;
+		double x_wid2 = 0;
+		double y_wid2 = 0;
 	
+//	new_pos_x = mouse_x * width_scale - x_offset;
+//	new_pos_y = mouse_y * height_scale  - y_offset;
+		double xLOW  = (0.0    * width_scale  ) - x_offset;
+		double xHIGH = (width  * width_scale  ) - x_offset;
+		double yHIGH  = (0.0    * height_scale ) - y_offset;
+		double yLOW = (height * height_scale ) - y_offset;
+		//printf("High, LOW x (%f, %f)\n", xHIGH, xLOW);
+		//printf("High, LOW y (%f, %f)\n", yHIGH, yLOW);
+
+		int nPointsInWindow = 0;
+		for(int i=0; i < x.size() - 2; i++){
+			if(x[i] < xHIGH and x[i] > xLOW and y[i] < yHIGH and y[i] > yLOW) nPointsInWindow++;
+		}
+	
+		int nPointsDrawn = 0;
 		for(int i=0; i < x.size() - 2; i++){
 			x_wid  = (x[i] + x_offset) / width_scale;
 			//y_wid  = (y[i] + y_offset) / height_scale;
-			x_wid2 = (x[i + 1] + x_offset) / width_scale;
+			//x_wid2 = (x[i + 1] + x_offset) / width_scale;
 			//y_wid2 = (y[i + 1] + y_offset) / height_scale;
+			if(x[i] > xHIGH or x[i] < xLOW or y[i] > yHIGH or y[i] < yLOW) continue;
+			if(nPointsInWindow > 10000 and (nPointsDrawn++%((int)nPointsInWindow/10000) != 0)) continue; 
+
 			if(drawLog){
 				if(y[i] <= 0){
-					y_wid = y_offset/height_scale;
+					y_wid = 0;
 				} else {
 					y_wid  = (log(y[i]) + y_offset) / height_scale;
 				}
-				if(y[i+1] <= 0){
-					y_wid2 = y_offset/height_scale;
-				} else {
-					y_wid2 = (log(y[i + 1]) + y_offset) / height_scale;
-				}
+				//if(y[i+1] <= 0){
+		//		if(y_wid2 <= 0){
+		//			y_wid2 = 0;
+		//		} else {
+		//			//y_wid2 = (log(y[i + 1]) + y_offset) / height_scale;
+		//			y_wid2 = (log(y_wid2) + y_offset) / height_scale;
+		//		}
 			} else {
 				y_wid  = (y[i] + y_offset) / height_scale;
-				y_wid2 = (y[i + 1] + y_offset) / height_scale;
+			//	y_wid2 = (y[i + 1] + y_offset) / height_scale;
 			}
+
 		//	printf("(%f, %f), (%f,%f)\n", x_wid,y_wid,x_wid2,y_wid2);
 			XDrawLine(disp, wind, DefaultGC(disp, screen), x_wid, y_wid, x_wid2, y_wid2);
 			XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid -2, y_wid -2, 4, 4);
+
+			x_wid2 = x_wid;
+			y_wid2 = y_wid;
 		}
 		XFillRectangle(disp, wind, DefaultGC(disp, screen), x_wid2 -2, y_wid2 -2, 4, 4);
 
@@ -819,13 +771,11 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 //	auto start = high_resolution_clock::now();
 
 	if(x_low_win == -1 and y_low_win == -1 and x_hi_win == -1 and y_hi_win == -1){	
-		// Automatically decide data postition
+		// Audomatically decide data postition
 		max_x = x[0];
 		max_y = y[0];
 		min_x = x[0];
 		min_y = y[0];
-
-		isZoomed = false;
 
 		for(int i=0; i<x.size(); i++){
 			if(x[i] > max_x) max_x = x[i];
@@ -900,7 +850,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 				//printf(" %f\n", z[(int)x_wid - min_x][(int)y_wid - min_y]);
 				int x_zpos = (int) (x_wid - min_x)/bw_x; 
 				int y_zpos = (int) (y_wid - min_y)/bw_y;
-				if(x_zpos <= 0 or y_zpos <= 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				//printf("%d, %d [%f, %f] (%f,%f)\n", x_zpos, y_zpos, x_wid, y_wid , bw_x, bw_y);
 
 				int colindex = (int) 10 * z[x_zpos][y_zpos] / max_cont; 
@@ -914,7 +864,6 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 					}
 				}
 				if(colindex > 19) colindex = 19;
-				if(colindex < 0) colindex = 0;
 				//int colindex = (int) 10 * i / width; 
 				//if(colindex > 0){
 				//printf("Colour = %i\n",colindex);
@@ -963,7 +912,6 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		//		if(z[i][j] > max_cont) max_cont = z[i][j];
 		//	}
 		//}
-		isZoomed = true;
 
 		width_scale = (x_hi_win - x_low_win) / width;
 		x_offset = -1.0 * x_low_win;
@@ -994,7 +942,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 				y_wid  = (j * height_scale) - y_offset;
 				int x_zpos = (int) (x_wid - min_x)/bw_x; 
 				int y_zpos = (int) (y_wid - min_y)/bw_y;
-				if(x_zpos <= 0 or y_zpos <= 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(drawLog) {
 					if(z[x_zpos][y_zpos] <= 0) continue;
 					if(log(z[x_zpos][y_zpos]) > max_cont) max_cont = log(z[x_zpos][y_zpos]);
@@ -1015,7 +963,7 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 				y_wid  = (j * height_scale) - y_offset;
 				int x_zpos = (int) (x_wid - min_x)/bw_x; 
 				int y_zpos = (int) (y_wid - min_y)/bw_y;
-				if(x_zpos <= 0 or y_zpos <= 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
+				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(y_wid > max_y) y_wid = max_y;
 				if(y_wid < min_y) y_wid = min_y;
 				int colindex = (int) 10 * z[x_zpos][y_zpos] / max_cont; 
@@ -1203,12 +1151,8 @@ int HistoGUI::Loop(){
 				// Set fit edge
 				int mouse_x = evt.xbutton.x;
 				SetFitEdge(mouse_x);
-			}else if(keySym == 0x6d){
-				DrawMaximum();
-			}else if(keySym == 0x71){
-				break;
-		//	} else {
-		//		break;	
+			} else {
+				break;	
 			}
 		}
 
@@ -1237,7 +1181,6 @@ int HistoGUI::Help(){
 	printf("r - call refresh function (if set)\n");
 	printf("s - toggle auto-refresh\n");
 	printf("f - place fit ranges\n");
-	printf("m - highlight maximum point\n");
 	printf("q - quit\n");
 	printf("\n");
 	printf("--\n");
