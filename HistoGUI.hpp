@@ -89,6 +89,16 @@ class HistoGUI{
 	int startingIndex;
 	int endingIndex;
 	bool funcDrawn;
+	bool isZoomed;
+
+	int nBinsX;
+	double lowBinX;
+	double highBinX;
+	double incX;
+	int nBinsY;
+	double lowBinY;
+	double highBinY;
+	double incY;
 
 
 	double old_xl, old_xh, old_yl, old_yh;
@@ -100,7 +110,7 @@ class HistoGUI{
 	int Loop();	
 	void Close(){ printf("Closing now!\n"); XCloseDisplay(disp); }
 	int DrawData(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);
-	int DrawCrosshairs(int mouse_x, int mouse_y);
+	virtual int DrawCrosshairs(int mouse_x, int mouse_y);
 	int Zoom(int mouse_x, int mouse_y);
 	int virtual Refresh();
 
@@ -118,7 +128,15 @@ class HistoGUI{
 	double DiffGaus_Sigma(double inX);
 	double DiffGaus_Scale(double inX);
 	double SelectDiffGaus(int index, double inX);
+	int DrawMaximum();
+
+	void MakeHist1D(int nBins, double lowBin, double highBin);
+	void MakeHist2D(int nBins_X, double lowBin_X, double highBin_X, int nBins_Y, double lowBin_Y, double highBin_Y);
+	void Fill(double val);
+	void Fill(double valX, double valY);
 	
+
+	void ClearData();
 
 	int Help();
 	int HelpCode();
