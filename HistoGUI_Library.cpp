@@ -33,12 +33,12 @@ void HistoGUI::MakeHist2D(int nBins_X, double lowBin_X, double highBin_X, int nB
 	nBinsX   = nBins_X;
 	lowBinX  = lowBin_X;
 	highBinX = highBin_X;
-	incX = (highBinX - lowBinX) / nBinsX;
+	incX = (double) (highBinX - lowBinX) / nBinsX;
 
 	nBinsY   = nBins_Y;
 	lowBinY  = lowBin_Y;
 	highBinY = highBin_Y;
-	incY = (highBinY - lowBinY) / nBinsY;
+	incY = (double) (highBinY - lowBinY) / nBinsY;
 
 	// Y axis
 	for(int i=0; i<nBinsY; i++){
@@ -59,7 +59,7 @@ void HistoGUI::MakeHist2D(int nBins_X, double lowBin_X, double highBin_X, int nB
 }
 
 void HistoGUI::Fill(double val){
-	if(val > highBinX){
+	if(val >= highBinX){
 	//	y[(int)ToTsteps - 1]++;
 	} else if(val < lowBinX){
 	//	y[0]++;
@@ -70,10 +70,10 @@ void HistoGUI::Fill(double val){
 }
 
 void HistoGUI::Fill(double valX, double valY){
-	if(valX > highBinX) return;
-	if(valX <  lowBinX) return;
-	if(valY > highBinY) return;
-	if(valY <  lowBinY) return;
+	if(valX >= highBinX) return;
+	if(valX <   lowBinX) return;
+	if(valY >= highBinY) return;
+	if(valY <   lowBinY) return;
 
 	int BinIndex_X = (int) std::floor((valX - lowBinX) / incX);
 	int BinIndex_Y = (int) std::floor((valY - lowBinY) / incY);
@@ -253,19 +253,19 @@ int HistoGUI::DrawCrosshairs(int mouse_x, int mouse_y){
 	char coord[32];
 
 	if(Draw2D_On){
-		int x_zpos = (int) (pos_x - min_x)/bw_x; 
-		int y_zpos = (int) (pos_y - min_y)/bw_y;
+		int x_zpos = (int) ((pos_x - min_x)/bw_x); 
+		int y_zpos = (int) ((pos_y - min_y)/bw_y);
 		if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1){
 			pos_z = 0.0;
 		} else { 
 			pos_z = z[x_zpos][y_zpos]; 	
 		}
-		sprintf(coord, "(%.2f, %.2f) z=%.2f", pos_x, pos_y, pos_z);
+		snprintf(coord, 32, "(%.2f, %.2f) z=%.2f", pos_x, pos_y, pos_z);
 	} else {
 		if(drawLog){
-			sprintf(coord, "(%.2f, %.2f)", pos_x, exp(pos_y));
+			snprintf(coord,32, "(%.2f, %.2f)", pos_x, exp(pos_y));
 		} else { 
-			sprintf(coord, "(%.2f, %.2f)", pos_x, pos_y);
+			snprintf(coord,32, "(%.2f, %.2f)", pos_x, pos_y);
 		}
 	}
 	XDrawString(disp, wind, DefaultGC(disp, screen), mouse_x + 5, mouse_y + 12, coord, strlen(coord));
@@ -376,6 +376,13 @@ int HistoGUI::SetFitEdge(int mouse_x){
 			// Do nothing
 			return 1;
 		}
+		
+		if(Draw2D_On){
+			ProjectY();
+			edgeSet = false;
+			return 1;
+		}
+
 		XDrawLine(disp, wind, DefaultGC(disp, screen), mouse_x, 0.0, mouse_x, height);	
 
 		Fit();
@@ -392,6 +399,114 @@ int HistoGUI::SetFitEdge(int mouse_x){
 	}
 
 	return 1;
+}
+
+int HistoGUI::SetFitEdgeY(int mouse_y){
+	if(!Draw2D_On){
+		return 0;
+	}
+
+	int j1, j2;
+	unsigned int j3, j4;  
+	Window root_return;
+
+	XGetGeometry(disp, wind, &root_return, &j1, &j2, &width, &height, &j3, &j4);
+	XSetForeground(disp,  DefaultGC(disp, screen), xcolour_red.pixel);
+	//XDrawLine(disp, wind, DefaultGC(disp, screen), mouse_x, 0.0, mouse_x, height);	
+	pos_y = mouse_y * height_scale  - y_offset;
+
+
+	if(edgeSet){
+		if(oldEdge > pos_y){
+			FitEdgeLo = pos_y;
+			FitEdgeHi = oldEdge;
+		} else if(oldEdge < pos_y){
+			FitEdgeLo = oldEdge;
+			FitEdgeHi = pos_y;
+		} else {
+			// Do nothing
+			return 1;
+		}
+	
+		ProjectX();
+
+		edgeSet = false;
+
+	} else {
+		edgeSet = true;
+		oldEdge = pos_y;
+
+		XClearWindow(disp, wind);
+		DrawData(old_xl, old_yl, old_xh, old_yh);
+		XSetForeground(disp,  DefaultGC(disp, screen), xcolour_red.pixel);
+		XDrawLine(disp, wind, DefaultGC(disp, screen), 0.0, mouse_y, width, mouse_y);	
+	}
+
+	return 1;
+}
+
+void HistoGUI::ProjectX(){
+
+	if(FitEdgeHi >= highBinY or FitEdgeLo < lowBinY){
+		// This is a strange problem -- just exit
+		return;
+	}
+
+	int BinIndex_Lo = (int) std::floor((FitEdgeLo - lowBinY) / incY);
+	int BinIndex_Hi = (int) std::floor((FitEdgeHi - lowBinY) / incY);
+
+	xProj.clear();
+	yProj.clear();
+
+	xProj.assign(x.begin(), x.end());
+	yProj.resize(xProj.size());
+
+	for(int j = 0; j < x.size(); j++){
+		for(int i = BinIndex_Lo; i < BinIndex_Hi; i++){
+			yProj[j] += z[j][i];
+		}
+	}
+	SwapProj();
+	Draw2D_On = false;
+	inProjection = true;
+	XClearWindow(disp, wind);
+	DrawData(-1,-1,-1,-1);
+	printf("Projection between Y = %f - %f\n", FitEdgeLo, FitEdgeHi);
+}
+
+void HistoGUI::ProjectY(){
+
+	if(FitEdgeHi >= highBinX or FitEdgeLo < lowBinX){
+		// This is a strange problem -- just exit
+		return;
+	}
+
+	int BinIndex_Lo = (int) std::floor((FitEdgeLo - lowBinX) / incX);
+	int BinIndex_Hi = (int) std::floor((FitEdgeHi - lowBinX) / incX);
+
+	xProj.clear();
+	yProj.clear();
+
+	xProj.assign(y.begin(), y.end());
+	yProj.resize(xProj.size());
+
+	for(int j = 0; j < y.size(); j++){
+		for(int i = BinIndex_Lo; i < BinIndex_Hi; i++){
+			yProj[j] += z[i][j];
+		}
+	}
+	SwapProj();
+	Draw2D_On = false;
+	inProjection = true;
+	XClearWindow(disp, wind);
+	DrawData(-1,-1,-1,-1);
+	printf("Projection between X = %f - %f\n", FitEdgeLo, FitEdgeHi);
+
+}
+
+void HistoGUI::SwapProj(){
+	x.swap(xProj);
+	y.swap(yProj);
 }
 
 
@@ -444,9 +559,9 @@ int HistoGUI::DrawGaus(){
 	char gausInfo1[32];
 	char gausInfo2[32];
 	char gausInfo3[32];
-	sprintf(gausInfo1, "Mean  = %.2f", fitParams[0]);	
-	sprintf(gausInfo2, "Sigma = %.2f", fitParams[1]);	
-	sprintf(gausInfo3, "Scale = %.2f", fitParams[2]);	
+	snprintf(gausInfo1, 32, "Mean  = %.2f", fitParams[0]);	
+	snprintf(gausInfo2, 32, "Sigma = %.2f", fitParams[1]);	
+	snprintf(gausInfo3, 32, "Scale = %.2f", fitParams[2]);	
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel,    gausInfo1, strlen(gausInfo1));
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+12, gausInfo2, strlen(gausInfo2));
 	XDrawString(disp, wind, DefaultGC(disp, screen), XposLabel, YposLabel+24, gausInfo3, strlen(gausInfo3));
@@ -771,7 +886,7 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
 			double x_val   = i * width_scale - x_offset;
-			sprintf(axis_val, "%.1f", x_val);
+			snprintf(axis_val, 16, "%.1f", x_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), i, axis_y + 10, axis_val, strlen(axis_val));
 		}
 
@@ -779,9 +894,9 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
 			if(drawLog){
-				sprintf(axis_val, "%.1f", exp(y_val));
+				snprintf(axis_val, 16, "%.1f", exp(y_val));
 			} else { 
-				sprintf(axis_val, "%.1f", y_val);
+				snprintf(axis_val, 16, "%.1f", y_val);
 			}
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
@@ -846,7 +961,7 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
 			double x_val   = i * width_scale - x_offset;
-			sprintf(axis_val, "%.1f", x_val);
+			snprintf(axis_val, 16, "%.1f", x_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), i, axis_y + 10, axis_val, strlen(axis_val));
 		}
 
@@ -854,9 +969,9 @@ int HistoGUI::DrawData(double x_low_win, double y_low_win, double x_hi_win, doub
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
 			if(drawLog){
-				sprintf(axis_val, "%.1f", exp(y_val));
+				snprintf(axis_val, 16, "%.1f", exp(y_val));
 			} else { 
-				sprintf(axis_val, "%.1f", y_val);
+				snprintf(axis_val, 16, "%.1f", y_val);
 			}
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
@@ -1024,8 +1139,9 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 	//			printf("(%f, %f) = ", x_wid,y_wid);
 				//printf(" %f\n", z[(int)x_wid - min_x][(int)y_wid - min_y]);
-				int x_zpos = (int) (x_wid - min_x)/bw_x; 
-				int y_zpos = (int) (y_wid - min_y)/bw_y;
+				int x_zpos = (int) std::floor((x_wid - min_x)/bw_x); 
+				int y_zpos = (int) std::floor((y_wid - min_y)/bw_y);
+				//if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				//printf("%d, %d [%f, %f] (%f,%f)\n", x_zpos, y_zpos, x_wid, y_wid , bw_x, bw_y);
 
@@ -1085,14 +1201,14 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
 			double x_val   = i * width_scale - x_offset;
-			sprintf(axis_val, "%.1f", x_val);
+			snprintf(axis_val, 16, "%.1f", x_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), i, axis_y + 10, axis_val, strlen(axis_val));
 		}
 
 		int h_step = height / 10;
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
-			sprintf(axis_val, "%.1f", y_val);
+			snprintf(axis_val, 16, "%.1f", y_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
 
@@ -1163,8 +1279,8 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 
 			for(int j=0; j < height; j++){
 				y_wid  = (j * height_scale) - y_offset;
-				int x_zpos = (int) (x_wid - min_x)/bw_x; 
-				int y_zpos = (int) (y_wid - min_y)/bw_y;
+				int x_zpos = (int) ((x_wid - min_x)/bw_x); 
+				int y_zpos = (int) ((y_wid - min_y)/bw_y);
 				if(x_zpos < 0 or y_zpos < 0 or x_zpos > x.size() -1 or y_zpos > y.size()-1) continue;
 				if(y_wid > max_y + bw_y) continue;
 				if(y_wid < min_y)        continue;
@@ -1213,14 +1329,14 @@ int HistoGUI::DrawData2D(double x_low_win, double y_low_win, double x_hi_win, do
 		int w_step = width / 10;
 		for(int i=0; i < (int) width; i += w_step){
 			double x_val   = i * width_scale - x_offset;
-			sprintf(axis_val, "%.1f", x_val);
+			snprintf(axis_val, 16, "%.1f", x_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), i, axis_y + 10, axis_val, strlen(axis_val));
 		}
 
 		int h_step = height / 10;
 		for(int i=0; i < (int) height; i += h_step){
 			double y_val = i * height_scale - y_offset;
-			sprintf(axis_val, "%.1f", y_val);
+			snprintf(axis_val, 16, "%.1f", y_val);
 			XDrawString(disp, wind, DefaultGC(disp, screen), axis_x + 10, i, axis_val, strlen(axis_val));
 		}
 
@@ -1363,12 +1479,24 @@ int HistoGUI::Loop(){
 				// Set fit edge
 				int mouse_x = evt.xbutton.x;
 				SetFitEdge(mouse_x);
+			}else if(keySym == 0x67){ // X proj
+				// Set fit edge
+				int mouse_y = evt.xbutton.y;
+				SetFitEdgeY(mouse_y);
 			}else if(keySym == 0x6d){
 				DrawMaximum();
 			}else if(keySym == 0x63){
 				ClearData();
 			}else if(keySym == 0x71){
-				break;	
+				if(inProjection){
+					SwapProj();	
+					Draw2D_On = true;
+					inProjection = false;
+					XClearWindow(disp, wind);
+					DrawData(-1,-1,-1,-1);
+				} else {
+					break;	
+				}
 			//}else{
 				
 			}
@@ -1398,7 +1526,8 @@ int HistoGUI::Help(){
 	printf("o - increase z scale in 2D\n");
 	printf("r - call refresh function (if set)\n");
 	printf("s - toggle auto-refresh\n");
-	printf("f - place fit ranges\n");
+	printf("f - place fit / projection ranges (X)\n");
+	printf("g - place projection ranges (Y)\n");
 	printf("m - highlight maximum point\n");
 	printf("c - clear data\n");
 	printf("q - quit\n");

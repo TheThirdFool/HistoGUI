@@ -29,6 +29,7 @@ class HistoGUI{
 		sqrt2Pi = 2.50662827463; 
 		xAxisTitle[0] = '\0';
 		yAxisTitle[0] = '\0';
+		inProjection  = false;
 	}
 
 	Display * disp;
@@ -47,6 +48,9 @@ class HistoGUI{
 	std::vector<double> x;
 	std::vector<double> y;
 	std::vector< std::vector<double> > z;
+
+	std::vector<double> xProj;
+	std::vector<double> yProj;
 
 	double max_x;
 	double min_x;
@@ -71,6 +75,7 @@ class HistoGUI{
 	double height_scale;
 	double y_offset;
 	bool Draw2D_On;
+	bool inProjection;
 	double scaleZ;
 	bool drawLog;
 	bool auto_refresh;
@@ -121,6 +126,7 @@ class HistoGUI{
 	long SetAutoRefresh( bool a, long milisec ){ auto_refresh = a; refresh_time = milisec; return milisec;}
 
 	int SetFitEdge(int mouse_x);
+	int SetFitEdgeY(int mouse_y);
 	int Fit();	
 	int DrawGaus();
 	double Gaus(double inX);
@@ -129,6 +135,9 @@ class HistoGUI{
 	double DiffGaus_Scale(double inX);
 	double SelectDiffGaus(int index, double inX);
 	int DrawMaximum();
+	void ProjectX();
+	void ProjectY();
+	void SwapProj();
 
 	void MakeHist1D(int nBins, double lowBin, double highBin);
 	void MakeHist2D(int nBins_X, double lowBin_X, double highBin_X, int nBins_Y, double lowBin_Y, double highBin_Y);
@@ -143,8 +152,8 @@ class HistoGUI{
 	int ReturnViridis(int i, int j);
 
 	int SetAxisTitles(char* xAxis, char* yAxis){
-		sprintf(yAxisTitle,"%s", yAxis);
-		sprintf(xAxisTitle,"%s", xAxis);	
+		snprintf(yAxisTitle, 64, "%s", yAxis);
+		snprintf(xAxisTitle, 64, "%s", xAxis);	
 		return 1;
 	}
 
