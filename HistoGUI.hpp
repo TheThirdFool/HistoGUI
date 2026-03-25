@@ -30,6 +30,11 @@ class HistoGUI{
 		xAxisTitle[0] = '\0';
 		yAxisTitle[0] = '\0';
 		inProjection  = false;
+		isAdditive    = false;
+	}
+
+	~HistoGUI(){
+		Close();
 	}
 
 	Display * disp;
@@ -83,6 +88,10 @@ class HistoGUI{
 	char yAxisTitle[64];
 	char xAxisTitle[64];
 
+	char yAxisTitleProj[64] = "Counts";
+	char xAxisTitleProj_holder[64];
+	char yAxisTitleProj_holder[64];
+
 	double FitEdgeLo;
 	double FitEdgeHi;
 	double oldEdge;
@@ -95,6 +104,7 @@ class HistoGUI{
 	int endingIndex;
 	bool funcDrawn;
 	bool isZoomed;
+	bool isAdditive;
 
 	int nBinsX;
 	double lowBinX;
@@ -151,11 +161,21 @@ class HistoGUI{
 	int HelpCode();
 	int ReturnViridis(int i, int j);
 
-	int SetAxisTitles(char* xAxis, char* yAxis){
+	void SetAxisTitles(char* xAxis, char* yAxis){
 		snprintf(yAxisTitle, 64, "%s", yAxis);
 		snprintf(xAxisTitle, 64, "%s", xAxis);	
-		return 1;
 	}
+
+	void SetProjectionAxisTitle(char* zAxis){
+		snprintf(yAxisTitleProj, 64, "%s", zAxis);
+	}
+
+	void Show(){
+		Init();
+		Loop();
+	}
+
+	bool SetAdditive(bool in = true){ isAdditive = in; return isAdditive; }
 
 };
 

@@ -466,7 +466,14 @@ void HistoGUI::ProjectX(){
 			yProj[j] += z[j][i];
 		}
 	}
+
 	SwapProj();
+
+	// Make axis titles correct
+	strcpy(xAxisTitleProj_holder, xAxisTitle);
+	strcpy(yAxisTitleProj_holder, yAxisTitle);
+	strcpy(yAxisTitle, yAxisTitleProj);
+
 	Draw2D_On = false;
 	inProjection = true;
 	XClearWindow(disp, wind);
@@ -495,13 +502,20 @@ void HistoGUI::ProjectY(){
 			yProj[j] += z[i][j];
 		}
 	}
+
 	SwapProj();
+
+	// Make axis titles correct
+	strcpy(xAxisTitleProj_holder, xAxisTitle);
+	strcpy(yAxisTitleProj_holder, yAxisTitle);
+	strcpy(xAxisTitle, yAxisTitle);
+	strcpy(yAxisTitle, yAxisTitleProj);
+
 	Draw2D_On = false;
 	inProjection = true;
 	XClearWindow(disp, wind);
 	DrawData(-1,-1,-1,-1);
 	printf("Projection between X = %f - %f\n", FitEdgeLo, FitEdgeHi);
-
 }
 
 void HistoGUI::SwapProj(){
@@ -1367,7 +1381,7 @@ int HistoGUI::Loop(){
 		if (auto_refresh == true and !XPending(disp)){
 				Refresh();
 				std::this_thread::sleep_for(std::chrono::milliseconds(refresh_time)); 
-				XClearWindow(disp, wind);
+				if(!isAdditive) XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
 				continue;
 		}
@@ -1465,7 +1479,7 @@ int HistoGUI::Loop(){
 				DrawData(old_xl, old_yl, old_xh, old_yh);
 			}else if(keySym == 0x72){
 				Refresh();
-				XClearWindow(disp, wind);
+				if(!isAdditive) XClearWindow(disp, wind);
 				DrawData(old_xl, old_yl, old_xh, old_yh);
 			}else if(keySym == 0x6c){
 				if(drawLog){
@@ -1490,6 +1504,8 @@ int HistoGUI::Loop(){
 			}else if(keySym == 0x71){
 				if(inProjection){
 					SwapProj();	
+					strcpy(xAxisTitle, xAxisTitleProj_holder);
+					strcpy(yAxisTitle, yAxisTitleProj_holder);
 					Draw2D_On = true;
 					inProjection = false;
 					XClearWindow(disp, wind);
