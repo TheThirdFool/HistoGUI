@@ -31,6 +31,7 @@ class HistoGUI{
 		yAxisTitle[0] = '\0';
 		inProjection  = false;
 		isAdditive    = false;
+		closed        = false;
 	}
 
 	~HistoGUI(){
@@ -119,11 +120,20 @@ class HistoGUI{
 	double old_xl, old_xh, old_yl, old_yh;
 	double old_mouse_x, old_mouse_y;
 
+	private:
+	bool closed;
+	public:
+
 	int Init();
 	int SetData(std::vector<double> a, std::vector<double>b);
 	int SetData(std::vector<double> a, std::vector<float>b);
 	int Loop();	
-	void Close(){ printf("Closing now!\n"); XCloseDisplay(disp); }
+	void Close(){
+		if(closed) return;
+		printf("Closing now!\n"); 
+		XCloseDisplay(disp); 
+		closed = true;
+	}
 	int DrawData(double x_low_win, double y_low_win, double x_hi_win, double y_hi_win);
 	virtual int DrawCrosshairs(int mouse_x, int mouse_y);
 	int Zoom(int mouse_x, int mouse_y);
